@@ -38,6 +38,7 @@ static size_t smartypants_cb__period(struct buf *ob, struct smartypants_data *sm
 static size_t smartypants_cb__number(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size);
 static size_t smartypants_cb__dash(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size);
 static size_t smartypants_cb__parens(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size);
+static size_t smartypants_cb__brackets(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size);
 static size_t smartypants_cb__squote(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size);
 static size_t smartypants_cb__backtick(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size);
 static size_t smartypants_cb__escape(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size);
@@ -56,6 +57,7 @@ static size_t (*smartypants_cb_ptrs[])
 	smartypants_cb__ltag,	/* 8 */
 	smartypants_cb__backtick, /* 9 */
 	smartypants_cb__escape, /* 10 */
+	smartypants_cb__brackets, /* 11 */
 };
 
 static const uint8_t smartypants_cb_chars[] = {
@@ -64,7 +66,7 @@ static const uint8_t smartypants_cb_chars[] = {
 	0, 0, 4, 0, 0, 0, 5, 3, 2, 0, 0, 0, 0, 1, 6, 0,
 	0, 7, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 10, 0, 0, 0,
 	9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -157,6 +159,33 @@ smartypants_cb__parens(struct buf *ob, struct smartypants_data *smrt, uint8_t pr
 		if (size >= 4 && t1 == 't' && t2 == 'm' && text[3] == ')') {
 			BUFPUTSL(ob, "&trade;");
 			return 3;
+		}
+	}
+
+	bufputc(ob, text[0]);
+	return 0;
+}
+
+static size_t
+smartypants_cb__brackets(struct buf *ob, struct smartypants_data *smrt, uint8_t previous_char, const uint8_t *text, size_t size)
+{
+	if (size >= 3) {
+		uint8_t t1 = tolower(text[1]);
+		uint8_t t2 = tolower(text[2]);
+
+		if (t1 == ' ' && t2 == ']') {
+			BUFPUTSL(ob, "&#9744;");
+			return 2;
+		}
+
+		if ((t1 == 'V' || t1 =='v') && t2 == ']') {
+			BUFPUTSL(ob, "&#9745;");
+			return 2;
+		}
+
+		if ((t1 == 'X' || t1 == 'x')  && t2 == ']') {
+			BUFPUTSL(ob, "&#9746;");
+			return 2;
 		}
 	}
 
